@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+env/
+.env
+.venv
+
+# TensorFlow / Keras
+*.h5
+*.weights.h5
+*.pb
+saved_model/
+*.tflite
+
+# Dataset (too large for git)
+dataset/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.webp
+
+# Model artifacts
+training_history.png
+model_metrics.json
+best_model_*.h5
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Deployment
+.render-buildpacks.json
