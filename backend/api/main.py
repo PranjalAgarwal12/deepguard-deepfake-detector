@@ -1,9 +1,7 @@
 import os
 import sys
-import time
 import logging
 
-# Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from fastapi import FastAPI, File, UploadFile, HTTPException
@@ -30,9 +28,30 @@ app.add_middleware(
 )
 
 
+def download_model_if_missing():
+    model_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "model", "deepfake_detector.h5"
+    )
+    if not os.path.exists(model_path):
+        logger.info("Model not found. Downloading from Google Drive...")
+        try:
+            import gdown
+            file_id = "1ZVQSMEZ6w0JUYzxV6qWCnVQJySnA6fiC"
+            url = f"https://drive.google.com/uc?id={file_id}"
+            gdown.download(url, model_path, quiet=False)
+            logger.info(f"Model downloaded to {model_path}")
+        except Exception as e:
+            logger.error(f"Failed to download model: {e}")
+            raise
+    else:
+        logger.info("Model file already exists, skipping download.")
+
+
 @app.on_event("startup")
 async def startup_event():
     try:
+        download_model_if_missing()
         load_model()
         logger.info("Model pre-loaded successfully.")
     except Exception as e:
@@ -71,20 +90,14 @@ async def gradcam_endpoint(file: UploadFile = File(...)):
 async def analyze_endpoint(file: UploadFile = File(...)):
     try:
         image_bytes = await file.read()
-
-        # Get prediction
         result = predict(image_bytes)
-
-        # Get Grad-CAM
         try:
             gradcam_b64 = generate_gradcam(image_bytes)
             result["gradcam_image"] = gradcam_b64
         except Exception as e:
             logger.warning(f"Grad-CAM skipped: {e}")
             result["gradcam_image"] = None
-
         return JSONResponse(content=result)
-
     except Exception as e:
         logger.error(f"Analysis error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
